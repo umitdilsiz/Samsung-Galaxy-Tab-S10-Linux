@@ -29,8 +29,8 @@ Kuruluma geçmeden önce cihazınızda şu ayarları yapmalısınız:
 Depoyu cihazınıza klonlayın ve kurulum betiğini çalıştırın:
 
 ```bash
-git clone <SENIN_REPO_URL_ADRESIN>
-cd <REPO_KLASORU>
+git clone -b main https://github.com/umitdilsiz/Samsung-Galaxy-Tab-S10-Linux.git
+cd Samsung-Galaxy-Tab-S10-Linux
 chmod +x setup.sh
 bash setup.sh
 ```
@@ -88,8 +88,23 @@ Samsung klavye kısıtlamaları nedeniyle tüm kısayollar **ALT** tuşuna ayarl
 | `Alt + Enter` | Terminali Aç (xfce4-terminal) |
 | `Alt + D` | Uygulama Başlatıcıyı Aç (dmenu) |
 | `Alt + E` | Dosya Yöneticisini Aç (Thunar) |
+| `Alt + Shift + S` | Uyku Engelleyici Aç/Kapat (Sleep Toggle) |
 | `Alt + Shift + Q` | Aktif Pencereyi Kapat |
 | `Alt + F` | Tam Ekran Geçişi (Fullscreen toggle) |
 | `Alt + Yön Tuşları` | Pencereler Arası Geçiş (Focus) |
 
 **Sudo Kullanımı:** Kurulumda belirlediğiniz şifre ile terminalde `sudo` komutlarını kullanabilirsiniz.
+
+---
+
+## 🔋 5. Uyku Modu (Energy Saver) ve Otomasyon
+
+Bu projede yer alan uyku modu betikleri (`sleep_linux.sh` ve `wake_linux.sh`), **MacroDroid**, **Tasker** veya benzeri otomasyon uygulamalarıyla entegre çalışmak üzere özel olarak tasarlanmıştır.
+
+* **Çalışma Mantığı:** Tabletin ekranı kapatıldığında PRoot, Termux-X11 ve PulseAudio gibi ağır süreçleri tamamen dondurarak (suspend) işlemciyi serbest bırakır ve pil tasarrufu sağlar. Ekran açıldığında ise bu süreçleri tekrar uyandırarak (resume) kaldığınız yerden anında devam etmenizi sağlar.
+* **Otomatik Aktarım:** Kurulum (setup.sh) esnasında, repodaki hazır `Debian_uyut.macro` ve `Debian_uyandir.macro` dosyaları otomatik olarak tabletinizin **İndirilenler/macrodroid_macros** klasörüne kopyalanır. MacroDroid uygulamasını açıp bu dosyaları doğrudan içeri aktarabilirsiniz.
+* **Otomasyon Kurulumu:** Eğer sıfırdan kurmak isterseniz, Termux:Tasker eklentisini cihazınıza kurduktan sonra otomasyon uygulamanızda şu iki makroyu oluşturabilirsiniz:
+  1. **Tetikleyici (Trigger):** Ekran Kapandığında ➔ **Eylem (Action):** Termux:Tasker eklentisi ile `~/.termux/tasker/sleep_linux.sh` betiğini çalıştır.
+  2. **Tetikleyici (Trigger):** Ekran Açıldığında ➔ **Eylem (Action):** Termux:Tasker eklentisi ile `~/.termux/tasker/wake_linux.sh` betiğini çalıştır.
+
+> **Önemli İpucu:** Arka planda kesintisiz bir derleme veya indirme işlemi yapmak istediğinizde, i3wm üzerinden Uyku Engelleyici anahtarını (`Alt + Shift + S`) kapatarak (**OFF** konumuna alarak) ekran kapansa dahi sistemin uykuya geçmesini engelleyebilirsiniz.
