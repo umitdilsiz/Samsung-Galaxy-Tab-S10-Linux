@@ -29,6 +29,7 @@ Kuruluma geçmeden önce cihazınızda şu ayarları yapmalısınız:
 Depoyu cihazınıza klonlayın ve kurulum betiğini çalıştırın:
 
 ```bash
+pkg update && pkg install git -y
 git clone -b main https://github.com/umitdilsiz/Samsung-Galaxy-Tab-S10-Linux.git
 cd Samsung-Galaxy-Tab-S10-Linux
 chmod +x setup.sh
