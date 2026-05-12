@@ -14,10 +14,10 @@ export PULSE_SERVER=127.0.0.1
 termux-x11 :0 -ac &
 echo "    X11 sunucusu başlatılıyor, bekleniyor..."
 WAIT=0
-until DISPLAY=:0 xdpyinfo >/dev/null 2>&1; do
+until DISPLAY=:0 xdpyinfo > /dev/null 2>&1; do
     sleep 0.5
-    WAIT=$((WAIT + 1))
-    if [ $WAIT -ge 30 ]; then
+    WAIT=\$((WAIT + 1))
+    if [ \$WAIT -ge 30 ]; then
         echo "⚠️  X11 sunucusu 15 saniye içinde başlamadı. Kurulum durduruluyor."
         exit 1
     fi
