@@ -12,12 +12,28 @@ pkill -9 -f "pulseaudio" 2>/dev/null
 pulseaudio --start --exit-idle-time=-1
 export PULSE_SERVER=127.0.0.1
 termux-x11 :0 -ac &
-sleep 3
+echo "    X11 sunucusu başlatılıyor, bekleniyor..."
+WAIT=0
+until DISPLAY=:0 xdpyinfo >/dev/null 2>&1; do
+    sleep 0.5
+    WAIT=$((WAIT + 1))
+    if [ $WAIT -ge 30 ]; then
+        echo "⚠️  X11 sunucusu 15 saniye içinde başlamadı. Kurulum durduruluyor."
+        exit 1
+    fi
+done
+echo "    ✓ X11 hazır."
 
 am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity
 
 export DISPLAY=:0
-proot-distro login debian --user $USER_NAME --shared-tmp -- bash -c "export DISPLAY=:0 && xrdb -nocpp -merge ~/.Xresources && dbus-launch --exit-with-session i3"
+proot-distro login debian --user $USER_NAME --shared-tmp -- bash -c "
+    export DISPLAY=:0
+    xrdb -nocpp -merge ~/.Xresources
+    # Dokunmatik gesture daemon'ı başlat (3 parmak swipe)
+    libinput-gestures-setup start 2>/dev/null || true
+    dbus-launch --exit-with-session i3
+"
 
 termux-wake-unlock
 EOF

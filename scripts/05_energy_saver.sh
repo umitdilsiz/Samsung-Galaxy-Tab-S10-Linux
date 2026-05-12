@@ -56,9 +56,6 @@ chmod 700 ~/.termux/tasker/*.sh
 
 # MacroDroid dosyalarının aktarılması
 echo "[*] MacroDroid dosyaları cihazın İndirilenler (Download) klasörüne kopyalanıyor..."
-termux-setup-storage
-sleep 2
-
 mkdir -p ~/storage/downloads/macrodroid_macros 2>/dev/null
 cp -r ./macrodroid_macros/*.macro ~/storage/downloads/macrodroid_macros/ 2>/dev/null
 
