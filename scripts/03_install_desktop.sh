@@ -23,11 +23,11 @@ while true; do
 done
 
 # libinput-gestures kurulumu (Github üzerinden manuel)
-proot-distro login debian --shared-tmp -- bash -c \"
+proot-distro login debian --shared-tmp -- bash -c "
     rm -rf /tmp/libinput-gestures
     git clone https://github.com/bulletmark/libinput-gestures.git /tmp/libinput-gestures
     cd /tmp/libinput-gestures && make install
-\"
+"
 
 echo "[*] 5/8 - Kullanıcı oluşturuluyor ve SUDO yetkisi tanımlanıyor..."
 proot-distro login debian --shared-tmp -- bash -c "
