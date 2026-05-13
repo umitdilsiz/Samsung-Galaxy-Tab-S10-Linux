@@ -22,15 +22,17 @@ while true; do
     fi
 done
 
-# libinput-gestures kurulumu (apt üzerinden)
-proot-distro login debian --shared-tmp -- bash -c "
-    apt install -y libinput-gestures 2>/dev/null || true
-"
+# libinput-gestures kurulumu (Github üzerinden manuel)
+proot-distro login debian --shared-tmp -- bash -c \"
+    rm -rf /tmp/libinput-gestures
+    git clone https://github.com/bulletmark/libinput-gestures.git /tmp/libinput-gestures
+    cd /tmp/libinput-gestures && make install
+\"
 
 echo "[*] 5/8 - Kullanıcı oluşturuluyor ve SUDO yetkisi tanımlanıyor..."
 proot-distro login debian --shared-tmp -- bash -c "
     useradd -m -s /bin/bash $USER_NAME 2>/dev/null || true
-    usermod -aG sudo $USER_NAME
+    usermod -aG sudo,input,video $USER_NAME
     echo '$USER_NAME:$USER_PASS' | chpasswd
 
     echo '$USER_NAME ALL=(ALL:ALL) ALL' > /etc/sudoers.d/$USER_NAME
@@ -56,9 +58,9 @@ NEXT=\$(i3-msg -t get_workspaces | jq \"[.[] | .num | select(. > \$CURRENT)] | m
 if [ \"\$NEXT\" = \"null\" ] || [ -z \"\$NEXT\" ]; then
     # Sağda workspace yok → yenisini oluştur
     NEW=\$((CURRENT + 1))
-    i3-msg "workspace \$NEW"
+    i3-msg \"workspace \$NEW\"
 else
-    i3-msg "workspace \$NEXT"
+    i3-msg \"workspace \$NEXT\"
 fi
 NEXTWSEOF
     chmod +x /home/$USER_NAME/.config/i3/smart_ws_next.sh
@@ -212,22 +214,28 @@ bindsym \$mod+Shift+4 move container to workspace 4
 bindsym \$mod+Shift+5 move container to workspace 5
 
 # ── PENCERE BOYUTLANDIRMA (Resize Modu) ─────────────────────
-mode "resize" {
+mode \"resize\" {
     bindsym Left  resize shrink width  30 px or 5 ppt
     bindsym Right resize grow   width  30 px or 5 ppt
     bindsym Up    resize shrink height 30 px or 5 ppt
     bindsym Down  resize grow   height 30 px or 5 ppt
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
+    bindsym Return mode \"default\"
+    bindsym Escape mode \"default\"
 }
-bindsym \$mod+r mode "resize"
+bindsym \$mod+r mode \"resize\"
 
 # ── UYKU KİLİDİ ─────────────────────────────────────────────
 bindsym \$mod+Shift+s exec bash ~/.config/i3/toggle_sleep.sh
 
+# ── i3 YÖNETİMİ ─────────────────────────────────────────────
+# Config'i yeniden yükle (kısayolları güncellemek için)
+bindsym \$mod+Shift+r reload
+# i3'ü yeniden başlat
+bindsym \$mod+Shift+e restart
+
 # ── OTOMATİK BAŞLATMA ───────────────────────────────────────
 # Not: i3 exec shell üzerinden geçirmez; shell operatörleri için bash -c gerekir
-exec --no-startup-id bash -c "libinput-gestures-setup start 2>/dev/null || true"
+exec --no-startup-id bash -c \"libinput-gestures-setup start 2>/dev/null || true\"
 
 # ── DURUM ÇUBUĞU ────────────────────────────────────────────
 bar {

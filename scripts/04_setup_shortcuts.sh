@@ -14,7 +14,7 @@ export PULSE_SERVER=127.0.0.1
 termux-x11 :0 -ac &
 echo "    X11 sunucusu başlatılıyor, bekleniyor..."
 WAIT=0
-until [ -S /tmp/.X11-unix/X0 ]; do
+until [ -S "\$TMPDIR/.X11-unix/X0" ]; do
     sleep 0.5
     WAIT=\$((WAIT + 1))
     if [ \$WAIT -ge 60 ]; then
