@@ -8,7 +8,7 @@ while true; do
             i3-wm i3blocks dmenu thunar xfce4-terminal mousepad falkon synaptic \
             dbus-x11 build-essential python3 git curl wget sudo \
             fonts-noto-cjk x11-xserver-utils \
-            jq xdotool wmctrl libinput-tools python3-pip
+            jq xdotool wmctrl libinput-tools python3-pip python3-i3ipc
     "; then
         break
     fi
@@ -58,9 +58,9 @@ NEXT=\$(i3-msg -t get_workspaces | jq \"[.[] | .num | select(. > \$CURRENT)] | m
 if [ \"\$NEXT\" = \"null\" ] || [ -z \"\$NEXT\" ]; then
     # Sağda workspace yok → yenisini oluştur
     NEW=\$((CURRENT + 1))
-    i3-msg \"workspace \$NEW\"
+    i3-msg \"workspace number \$NEW\"
 else
-    i3-msg \"workspace \$NEXT\"
+    i3-msg \"workspace number \$NEXT\"
 fi
 NEXTWSEOF
     chmod +x /home/$USER_NAME/.config/i3/smart_ws_next.sh
@@ -79,7 +79,7 @@ if [ \"\$PREV\" = \"null\" ] || [ -z \"\$PREV\" ]; then
     # Solda workspace yok → dur (niri gibi sol sınır)
     exit 0
 else
-    i3-msg \"workspace \$PREV\"
+    i3-msg \"workspace number \$PREV\"
 fi
 PREVWSEOF
     chmod +x /home/$USER_NAME/.config/i3/smart_ws_prev.sh
@@ -93,9 +93,9 @@ NEXT=\$(i3-msg -t get_workspaces | jq \"[.[] | .num | select(. > \$CURRENT)] | m
 
 if [ \"\$NEXT\" = \"null\" ] || [ -z \"\$NEXT\" ]; then
     NEW=\$((CURRENT + 1))
-    i3-msg \"move container to workspace \$NEW; workspace \$NEW\"
+    i3-msg \"move container to workspace number \$NEW; workspace number \$NEW\"
 else
-    i3-msg \"move container to workspace \$NEXT; workspace \$NEXT\"
+    i3-msg \"move container to workspace number \$NEXT; workspace number \$NEXT\"
 fi
 MOVENEXTEOF
     chmod +x /home/$USER_NAME/.config/i3/smart_ws_move_next.sh
@@ -110,20 +110,48 @@ PREV=\$(i3-msg -t get_workspaces | jq \"[.[] | .num | select(. < \$CURRENT)] | m
 if [ \"\$PREV\" = \"null\" ] || [ -z \"\$PREV\" ]; then
     exit 0
 else
-    i3-msg \"move container to workspace \$PREV; workspace \$PREV\"
+    i3-msg \"move container to workspace number \$PREV; workspace number \$PREV\"
 fi
 MOVEPREVEOF
     chmod +x /home/$USER_NAME/.config/i3/smart_ws_move_prev.sh
 
+    # ── smart_focus_next.sh ────────────────────────────────────────────────
+    # Sağa odaklan, eğer aynı kalırsa (sağ sınırda ise) sonraki ekrana geç
+    cat << 'FOCUSNEXTEOF' > /home/$USER_NAME/.config/i3/smart_focus_next.sh
+#!/bin/bash
+OLD_FOCUS=\$(i3-msg -t get_tree | jq '.. | objects | select(.focused == true) | .id')
+i3-msg focus right
+NEW_FOCUS=\$(i3-msg -t get_tree | jq '.. | objects | select(.focused == true) | .id')
+
+if [ \"\$OLD_FOCUS\" = \"\$NEW_FOCUS\" ]; then
+    bash ~/.config/i3/smart_ws_next.sh
+fi
+FOCUSNEXTEOF
+    chmod +x /home/$USER_NAME/.config/i3/smart_focus_next.sh
+
+    # ── smart_focus_prev.sh ────────────────────────────────────────────────
+    # Sola odaklan, eğer aynı kalırsa (sol sınırda ise) önceki ekrana geç
+    cat << 'FOCUSPREVEOF' > /home/$USER_NAME/.config/i3/smart_focus_prev.sh
+#!/bin/bash
+OLD_FOCUS=\$(i3-msg -t get_tree | jq '.. | objects | select(.focused == true) | .id')
+i3-msg focus left
+NEW_FOCUS=\$(i3-msg -t get_tree | jq '.. | objects | select(.focused == true) | .id')
+
+if [ \"\$OLD_FOCUS\" = \"\$NEW_FOCUS\" ]; then
+    bash ~/.config/i3/smart_ws_prev.sh
+fi
+FOCUSPREVEOF
+    chmod +x /home/$USER_NAME/.config/i3/smart_focus_prev.sh
+
     # ── libinput-gestures.conf ───────────────────────────────────────────
-    # 3 parmak yatay swipe → workspace değiştir (niri hissi)
+    # 3 parmak yatay swipe → odak/workspace değiştir (niri hissi)
     mkdir -p /home/$USER_NAME/.config
     cat << 'GESTUREEOF' > /home/$USER_NAME/.config/libinput-gestures.conf
-# 3 parmak sola kaydır → bir sonraki workspace (niri: sağa pencere)
-gesture swipe left  3 bash /home/$USER_NAME/.config/i3/smart_ws_next.sh
+# 3 parmak sola kaydır → sağdaki uygulamaya/ekrana geç
+gesture swipe left  3 bash /home/$USER_NAME/.config/i3/smart_focus_next.sh
 
-# 3 parmak sağa kaydır → bir önceki workspace (niri: sola pencere)
-gesture swipe right 3 bash /home/$USER_NAME/.config/i3/smart_ws_prev.sh
+# 3 parmak sağa kaydır → soldaki uygulamaya/ekrana geç
+gesture swipe right 3 bash /home/$USER_NAME/.config/i3/smart_focus_prev.sh
 
 # 4 parmak yukarı → fullscreen toggle
 gesture swipe up    4 i3-msg fullscreen toggle
@@ -169,10 +197,10 @@ bindsym \$mod+space layout toggle split tabbed stacked
 bindsym \$mod+Shift+space floating toggle
 
 # ── PENCERE ODAKLAMA (Focus) ────────────────────────────────
-bindsym \$mod+Left  focus left
+bindsym \$mod+Left  exec bash ~/.config/i3/smart_focus_prev.sh
 bindsym \$mod+Down  focus down
 bindsym \$mod+Up    focus up
-bindsym \$mod+Right focus right
+bindsym \$mod+Right exec bash ~/.config/i3/smart_focus_next.sh
 
 # Floating pencereler arasında dolaş
 bindsym \$mod+Tab focus mode_toggle
@@ -197,21 +225,21 @@ bindsym \$mod+ctrl+Shift+Right exec bash ~/.config/i3/smart_ws_move_next.sh
 bindsym \$mod+ctrl+Shift+Left  exec bash ~/.config/i3/smart_ws_move_prev.sh
 
 # ── KLASİK WORKSPACE KISAYOLLARI (Direkt Erişim) ───────────
-bindsym \$mod+1 workspace 1
-bindsym \$mod+2 workspace 2
-bindsym \$mod+3 workspace 3
-bindsym \$mod+4 workspace 4
-bindsym \$mod+5 workspace 5
-bindsym \$mod+6 workspace 6
-bindsym \$mod+7 workspace 7
-bindsym \$mod+8 workspace 8
-bindsym \$mod+9 workspace 9
+bindsym \$mod+1 workspace number 1
+bindsym \$mod+2 workspace number 2
+bindsym \$mod+3 workspace number 3
+bindsym \$mod+4 workspace number 4
+bindsym \$mod+5 workspace number 5
+bindsym \$mod+6 workspace number 6
+bindsym \$mod+7 workspace number 7
+bindsym \$mod+8 workspace number 8
+bindsym \$mod+9 workspace number 9
 
-bindsym \$mod+Shift+1 move container to workspace 1
-bindsym \$mod+Shift+2 move container to workspace 2
-bindsym \$mod+Shift+3 move container to workspace 3
-bindsym \$mod+Shift+4 move container to workspace 4
-bindsym \$mod+Shift+5 move container to workspace 5
+bindsym \$mod+Shift+1 move container to workspace number 1
+bindsym \$mod+Shift+2 move container to workspace number 2
+bindsym \$mod+Shift+3 move container to workspace number 3
+bindsym \$mod+Shift+4 move container to workspace number 4
+bindsym \$mod+Shift+5 move container to workspace number 5
 
 # ── PENCERE BOYUTLANDIRMA (Resize Modu) ─────────────────────
 mode \"resize\" {
@@ -236,11 +264,13 @@ bindsym \$mod+Shift+e restart
 # ── OTOMATİK BAŞLATMA ───────────────────────────────────────
 # Not: i3 exec shell üzerinden geçirmez; shell operatörleri için bash -c gerekir
 exec --no-startup-id bash -c \"libinput-gestures-setup start 2>/dev/null || true\"
+exec_always --no-startup-id ~/.config/i3/autoname_workspaces.py
 
 # ── DURUM ÇUBUĞU ────────────────────────────────────────────
 bar {
     status_command i3blocks -c ~/.config/i3/i3blocks.conf
     position bottom
+    strip_workspace_numbers yes
 }
 I3EOF
 
@@ -277,6 +307,63 @@ interval=60
 command=date '+🕒 %Y-%m-%d %H:%M'
 interval=5
 BLOCKSEOF
+
+    # ── autoname_workspaces.py ───────────────────────────────────────────
+    cat << 'AUTONAMEEOF' > /home/$USER_NAME/.config/i3/autoname_workspaces.py
+#!/usr/bin/env python3
+import i3ipc
+
+def rename_workspaces(i3):
+    try:
+        workspaces = i3.get_workspaces()
+        for workspace in workspaces:
+            ws_tree = i3.get_tree().find_by_id(workspace.ipc_data['id'])
+            
+            window_classes = []
+            for leaf in ws_tree.leaves():
+                if leaf.window_class:
+                    name = leaf.window_class.lower()
+                    if name == "xfce4-terminal":
+                        name = "Terminal"
+                    window_classes.append(name.capitalize())
+            
+            num = workspace.num
+            if num == -1:
+                continue
+                
+            if not window_classes:
+                new_name = str(num)
+            else:
+                unique_classes = []
+                for w in window_classes:
+                    if w not in unique_classes:
+                        unique_classes.append(w)
+                new_name = f"{num}: {' - '.join(unique_classes)}"
+                
+            if workspace.name != new_name:
+                i3.command(f'rename workspace "{workspace.name}" to "{new_name}"')
+    except Exception as e:
+        pass
+
+def main():
+    i3 = i3ipc.Connection()
+    
+    def on_change(i3, e):
+        rename_workspaces(i3)
+        
+    i3.on('window::new', on_change)
+    i3.on('window::close', on_change)
+    i3.on('window::move', on_change)
+    i3.on('workspace::focus', on_change)
+    i3.on('window::title', on_change)
+    
+    rename_workspaces(i3)
+    i3.main()
+
+if __name__ == '__main__':
+    main()
+AUTONAMEEOF
+    chmod +x /home/$USER_NAME/.config/i3/autoname_workspaces.py
 
     chown -R $USER_NAME:$USER_NAME /home/$USER_NAME/
 "
