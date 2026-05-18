@@ -323,8 +323,8 @@ def rename_workspaces(i3):
             for leaf in ws_tree.leaves():
                 if leaf.window_class:
                     name = leaf.window_class.lower()
-                    if name == "xfce4-terminal":
-                        name = "Terminal"
+                    if name == \"xfce4-terminal\":
+                        name = \"Terminal\"
                     window_classes.append(name.capitalize())
             
             num = workspace.num
@@ -338,10 +338,10 @@ def rename_workspaces(i3):
                 for w in window_classes:
                     if w not in unique_classes:
                         unique_classes.append(w)
-                new_name = f"{num}: {' - '.join(unique_classes)}"
+                new_name = f\"{num}: {' - '.join(unique_classes)}\"
                 
             if workspace.name != new_name:
-                i3.command(f'rename workspace "{workspace.name}" to "{new_name}"')
+                i3.command(f'rename workspace \"{workspace.name}\" to \"{new_name}\"')
     except Exception as e:
         pass
 
